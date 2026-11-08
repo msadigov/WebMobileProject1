@@ -73,6 +73,7 @@ function renderSeats() {
         button.className = "seat";
         button.textContent = seat.number;
         button.dataset.id = seat.id;
+        button.addEventListener("click", () => inspectSeat(seat.id));
 
         if (!seat.available) {
           button.classList.add("unavailable");
@@ -86,6 +87,37 @@ function renderSeats() {
     }
 
     seatMap.appendChild(sectionDiv);
+  });
+}
+
+function inspectSeat(seatId) {
+  const seat = seats.find(s => s.id === seatId);
+
+  if (!seat || !seat.available) return;
+
+  selectedSeat = seat;
+
+  const info = document.getElementById("seat-info");
+  info.textContent =
+    `Section: ${seat.section} | Row: ${seat.row} | ` +
+    `Seat: ${seat.number} | Price: ${seat.price} AZN`;
+
+  const addButton = document.getElementById("add-to-cart");
+  addButton.disabled = cart.some(item => item.id === seat.id);
+
+  updateSeatColors();
+}
+
+function updateSeatColors() {
+  document.querySelectorAll(".seat").forEach(button => {
+    const seatId = button.dataset.id;
+    button.classList.remove("selected", "in-cart");
+
+    if (cart.some(item => item.id === seatId)) {
+      button.classList.add("in-cart");
+    } else if (selectedSeat && selectedSeat.id === seatId) {
+      button.classList.add("selected");
+    }
   });
 }
 
