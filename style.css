@@ -116,3 +116,20 @@ button:disabled {
   border-radius: 8px;
   border-left: 4px solid #2563eb;
 }
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.remove-btn {
+  background: #dc2626;
+  padding: 8px 12px;
+}
+
+.remove-btn:hover {
+  background: #b91c1c;
+}
+
