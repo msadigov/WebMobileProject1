@@ -4,47 +4,111 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aurora Theatre Ticketing</title>
+  <title>Aurora Theatre | Ticket Booking</title>
   <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
 </head>
 <body>
-  <header>
-    <h1>Aurora Theatre</h1>
-    <p>Interactive Ticket Booking System</p>
+  <header class="site-header">
+    <div class="header-content">
+      <div>
+        <p class="eyebrow">WELCOME TO AURORA</p>
+        <h1>Aurora Theatre</h1>
+        <p>Interactive Venue Ticketing System</p>
+      </div>
+      <div class="header-label">LIVE SEAT SELECTION</div>
+    </div>
   </header>
 
-  <main>
-    <section id="venue">
-      <h2>Choose Your Seat</h2>
-      <p>Select a seat to see its details.</p>
-
-      <div id="stage">
-        <h3>STAGE</h3>
+  <main class="layout">
+    <section class="venue-panel">
+      <div class="section-heading">
+        <div>
+          <h2>Choose Your Seat</h2>
+          <p>Explore the theatre and select your perfect seat.</p>
+        </div>
+        <span class="venue-tag">240 Seats</span>
       </div>
 
-      <div id="seat-map">
-        <!-- Seats here -->
+      <div class="legend">
+        <span><i class="legend-dot available"></i> Available</span>
+        <span><i class="legend-dot inspected"></i> Selected</span>
+        <span><i class="legend-dot cart-state"></i> In Cart</span>
+        <span><i class="legend-dot unavailable"></i> Unavailable</span>
+      </div>
+
+      <div id="map-controls" class="map-controls">
+        <button id="zoom-in" type="button">Zoom In +</button>
+        <button id="zoom-out" type="button">Zoom Out −</button>
+        <button id="move-up" type="button">↑ Up</button>
+        <button id="move-down" type="button">↓ Down</button>
+        <button id="move-left" type="button">← Left</button>
+        <button id="move-right" type="button">→ Right</button>
+        <button id="reset-view" type="button">Reset / Center</button>
+      </div>
+
+      <div id="map-viewport" class="map-viewport">
+        <div id="map-content" class="map-content">
+          <div class="stage">STAGE</div>
+          <div id="seat-map"></div>
+        </div>
+      </div>
+
+      <div class="venue-footer">
+        <p>Scroll to zoom · Drag to move · Click a seat to inspect</p>
       </div>
     </section>
 
-    <section id="details">
-      <h2>Seat Details</h2>
-      <p id="seat-info">
-        No seat selected.
-      </p>
-      <button id="add-to-cart" disabled>
-        ADD TO CART
-      </button>
-    </section>
+    <aside class="sidebar">
+      <section id="details" class="side-panel">
+        <h2>Seat Details</h2>
+        <p class="panel-description">
+          Inspect a seat before adding it to your cart.
+        </p>
 
-    <section id="cart">
-      <h2>Your Cart</h2>
-      <div id="cart-items">
-        <p>Your cart is empty.</p>
-      </div>
-      <h3>Total: <span id="total">0</span> AZN</h3>
-    </section>
+        <div id="seat-info" class="seat-info">
+          No seat selected.
+        </div>
+
+        <button id="add-to-cart" class="primary-button"
+          type="button" disabled>
+          ADD TO CART
+        </button>
+      </section>
+
+      <section id="cart" class="side-panel">
+        <div class="cart-heading">
+          <h2>Your Cart</h2>
+          <span id="cart-count" class="cart-count">0 tickets</span>
+        </div>
+
+        <div id="cart-items" class="cart-items">
+          <p>Your cart is empty.</p>
+        </div>
+
+        <div class="cart-total">
+          <span>Total Price</span>
+          <strong><span id="total">0</span> AZN</strong>
+        </div>
+      </section>
+
+      <section class="side-panel price-panel">
+        <h2>Ticket Categories</h2>
+        <div class="price-line">
+          <span>VIP</span><strong>80 AZN</strong>
+        </div>
+        <div class="price-line">
+          <span>Premium</span><strong>50 AZN</strong>
+        </div>
+        <div class="price-line">
+          <span>Standard</span><strong>25 AZN</strong>
+        </div>
+      </section>
+    </aside>
   </main>
-  <script src="script.js"></script>
+
+  <footer class="site-footer">
+    <p>Aurora Theatre · Web & Mobile I Project</p>
+  </footer>
 </body>
 </html>
