@@ -1,4 +1,7 @@
 
+"use strict";
+
+
 const venue = {
   name: "Aurora Theatre",
   sections: [
@@ -23,29 +26,17 @@ const venue = {
   ]
 };
 
+const STORAGE_KEY = "auroraCart";
+
 let seats = [];
 let selectedSeat = null;
 let cart = [];
 
-try {
-  const savedCart = JSON.parse(
-    localStorage.getItem("auroraCart") || "[]"
-  );
 
-  if (Array.isArray(savedCart)) {
-    cart = savedCart
-      .map(item => seats.find(seat => seat.id === item.id))
-      .filter((seat, index, all) =>
-        seat &&
-        seat.available &&
-        all.findIndex(s => s.id === seat.id) === index
-      );
-  }
-} catch (error) {
-  cart = [];
-}
 
 function generateSeatData() {
+  seats = [];
+
   venue.sections.forEach(section => {
     for (let row = 1; row <= section.rows; row++) {
       for (let number = 1; number <= section.seatsPerRow; number++) {
@@ -64,29 +55,43 @@ function generateSeatData() {
   });
 }
 
-generateSeatData();
 
-
-try {
-  const savedCart = JSON.parse(
-    localStorage.getItem("auroraCart") || "[]"
-  );
-
-  if (Array.isArray(savedCart)) {
-    cart = savedCart
-      .map(item => seats.find(seat => seat.id === item.id))
-      .filter((seat, index, all) =>
-        seat &&
-        seat.available &&
-        all.findIndex(s => s.id === seat.id) === index
-      );
+function saveCart() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(
+      cart.map(seat => seat.id)
+    ));
+  } catch (error) {
+    console.warn("Unable to save cart:", error);
   }
-} catch (error) {
-  cart = [];
+}
+
+function loadCart() {
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem(STORAGE_KEY) || "[]"
+    );
+
+    if (!Array.isArray(stored)) return;
+
+    const uniqueIds = new Set();
+
+    stored.forEach(item => {
+      const id = typeof item === "string" ? item : item?.id;
+      const seat = seats.find(s => s.id === id);
+
+      if (seat && seat.available && !uniqueIds.has(id)) {
+        cart.push(seat);
+        uniqueIds.add(id);
+      }
+    });
+  } catch (error) {
+    console.warn("Unable to restore cart:", error);
+    cart = [];
+  }
 }
 
 
-console.log("Generated seats:", seats);
 
 function renderSeats() {
   const seatMap = document.getElementById("seat-map");
@@ -97,36 +102,65 @@ function renderSeats() {
     sectionDiv.className = "seating-section";
 
     const title = document.createElement("h3");
-    title.textContent = `${section.name} - ${section.price} AZN`;
+    title.textContent =
+      `${section.name} SECTION — ${section.price} AZN`;
+
     sectionDiv.appendChild(title);
 
     for (let row = 1; row <= section.rows; row++) {
       const rowDiv = document.createElement("div");
       rowDiv.className = "seat-row";
 
-      seats.filter(seat =>
+      const leftLabel = document.createElement("span");
+      leftLabel.className = "row-label";
+      leftLabel.textContent = row;
+      rowDiv.appendChild(leftLabel);
+
+      const rowSeats = seats.filter(seat =>
         seat.section === section.name && seat.row === row
-      ).forEach(seat => {
+      );
+
+      rowSeats.forEach(seat => {
         const button = document.createElement("button");
+
+        button.type = "button";
         button.className = "seat";
         button.textContent = seat.number;
         button.dataset.id = seat.id;
-        button.addEventListener("click", () => inspectSeat(seat.id));
+
+        button.setAttribute(
+          "aria-label",
+          `${seat.section}, Row ${seat.row}, ` +
+          `Seat ${seat.number}, ${seat.price} AZN`
+        );
 
         if (!seat.available) {
           button.classList.add("unavailable");
           button.disabled = true;
+          button.title = "Unavailable seat";
+        } else {
+          button.addEventListener("click", () => {
+            inspectSeat(seat.id);
+          });
         }
 
         rowDiv.appendChild(button);
       });
+
+      const rightLabel = document.createElement("span");
+      rightLabel.className = "row-label";
+      rightLabel.textContent = row;
+      rowDiv.appendChild(rightLabel);
 
       sectionDiv.appendChild(rowDiv);
     }
 
     seatMap.appendChild(sectionDiv);
   });
+
+  updateSeatColors();
 }
+
 
 function inspectSeat(seatId) {
   const seat = seats.find(s => s.id === seatId);
@@ -136,28 +170,47 @@ function inspectSeat(seatId) {
   selectedSeat = seat;
 
   const info = document.getElementById("seat-info");
-  info.textContent =
-    `Section: ${seat.section} | Row: ${seat.row} | ` +
-    `Seat: ${seat.number} | Price: ${seat.price} AZN`;
+  info.innerHTML = "";
+
+  const heading = document.createElement("strong");
+  heading.textContent = `${seat.section} Section`;
+
+  const description = document.createElement("p");
+  description.textContent =
+    `Row ${seat.row} · Seat ${seat.number}`;
+
+  const price = document.createElement("p");
+  price.textContent = `Ticket Price: ${seat.price} AZN`;
+
+  info.append(heading, description, price);
+
+  const alreadyInCart = cart.some(item => item.id === seat.id);
 
   const addButton = document.getElementById("add-to-cart");
-  addButton.disabled = cart.some(item => item.id === seat.id);
+  addButton.disabled = alreadyInCart;
+  addButton.textContent = alreadyInCart
+    ? "ALREADY IN CART"
+    : "ADD TO CART";
 
   updateSeatColors();
 }
 
+
+
 function updateSeatColors() {
   document.querySelectorAll(".seat").forEach(button => {
     const seatId = button.dataset.id;
+
     button.classList.remove("selected", "in-cart");
 
     if (cart.some(item => item.id === seatId)) {
       button.classList.add("in-cart");
-    } else if (selectedSeat && selectedSeat.id === seatId) {
+    } else if (selectedSeat?.id === seatId) {
       button.classList.add("selected");
     }
   });
 }
+
 
 function addToCart() {
   if (!selectedSeat || !selectedSeat.available) return;
@@ -169,27 +222,46 @@ function addToCart() {
   if (alreadyAdded) {
     alert("This seat is already in your cart.");
     return;
-    cart.push(selectedSeat);
   }
-  saveCart();
 
   cart.push(selectedSeat);
 
+  saveCart();
   renderCart();
   updateSeatColors();
 
-  document.getElementById("add-to-cart").disabled = true;
+  const button = document.getElementById("add-to-cart");
+  button.disabled = true;
+  button.textContent = "ALREADY IN CART";
+}
+
+
+function removeFromCart(seatId) {
+  cart = cart.filter(seat => seat.id !== seatId);
+
+  saveCart();
+  renderCart();
+  updateSeatColors();
+
+  if (selectedSeat?.id === seatId) {
+    const button = document.getElementById("add-to-cart");
+    button.disabled = false;
+    button.textContent = "ADD TO CART";
+  }
 }
 
 
 function renderCart() {
   const cartItems = document.getElementById("cart-items");
   const totalElement = document.getElementById("total");
+  const countElement = document.getElementById("cart-count");
 
   cartItems.innerHTML = "";
 
   if (cart.length === 0) {
-    cartItems.textContent = "Your cart is empty.";
+    const empty = document.createElement("p");
+    empty.textContent = "Your cart is empty.";
+    cartItems.appendChild(empty);
   }
 
   let total = 0;
@@ -200,44 +272,167 @@ function renderCart() {
     const item = document.createElement("div");
     item.className = "cart-item";
 
-    const description = document.createElement("span");
-    description.textContent =
-      `${seat.section} - Row ${seat.row}, ` +
-      `Seat ${seat.number}: ${seat.price} AZN`;
+    const description = document.createElement("div");
+
+    const seatName = document.createElement("span");
+    seatName.textContent =
+      `${seat.section} · Row ${seat.row} · Seat ${seat.number}`;
+
+    const price = document.createElement("strong");
+    price.textContent = `${seat.price} AZN`;
+
+    description.append(seatName, price);
 
     const removeButton = document.createElement("button");
-    removeButton.textContent = "Remove";
+    removeButton.type = "button";
     removeButton.className = "remove-btn";
+    removeButton.textContent = "Remove";
 
     removeButton.addEventListener("click", () => {
       removeFromCart(seat.id);
     });
 
-    item.appendChild(description);
-    item.appendChild(removeButton);
+    item.append(description, removeButton);
     cartItems.appendChild(item);
   });
 
   totalElement.textContent = total;
+
+  countElement.textContent =
+    `${cart.length} ticket${cart.length === 1 ? "" : "s"}`;
 }
 
-function removeFromCart(seatId) {
-  cart = cart.filter(seat => seat.id !== seatId);
 
-  renderCart();
-  updateSeatColors();
+let zoom = 1;
+let panX = 0;
+let panY = 0;
 
-  if (selectedSeat && selectedSeat.id === seatId) {
-    document.getElementById("add-to-cart").disabled = false;
+const mapContent = document.getElementById("map-content");
+const mapViewport = document.getElementById("map-viewport");
+
+function updateMapTransform() {
+  mapContent.style.transform =
+    `translate(${panX}px, ${panY}px) scale(${zoom})`;
+}
+
+function changeZoom(amount) {
+  zoom = Math.max(0.5, Math.min(2, zoom + amount));
+  zoom = Math.round(zoom * 100) / 100;
+  updateMapTransform();
+}
+
+function moveMap(x, y) {
+  panX += x;
+  panY += y;
+  updateMapTransform();
+}
+
+function resetMap() {
+  zoom = 1;
+  panX = 0;
+  panY = 0;
+  updateMapTransform();
+}
+
+document.getElementById("zoom-in")
+  .addEventListener("click", () => changeZoom(0.1));
+
+document.getElementById("zoom-out")
+  .addEventListener("click", () => changeZoom(-0.1));
+
+document.getElementById("move-up")
+  .addEventListener("click", () => moveMap(0, 40));
+
+document.getElementById("move-down")
+  .addEventListener("click", () => moveMap(0, -40));
+
+document.getElementById("move-left")
+  .addEventListener("click", () => moveMap(40, 0));
+
+document.getElementById("move-right")
+  .addEventListener("click", () => moveMap(-40, 0));
+
+document.getElementById("reset-view")
+  .addEventListener("click", resetMap);
+
+
+
+mapViewport.addEventListener("wheel", event => {
+  event.preventDefault();
+
+  const amount = event.deltaY < 0 ? 0.1 : -0.1;
+  changeZoom(amount);
+}, { passive: false });
+
+
+
+let isDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+let pointerStartX = 0;
+let pointerStartY = 0;
+let suppressSeatClick = false;
+
+mapViewport.addEventListener("pointerdown", event => {
+  if (event.button !== 0) return;
+
+  isDragging = true;
+  pointerStartX = event.clientX;
+  pointerStartY = event.clientY;
+  dragStartX = event.clientX;
+  dragStartY = event.clientY;
+
+  mapViewport.setPointerCapture(event.pointerId);
+});
+
+mapViewport.addEventListener("pointermove", event => {
+  if (!isDragging) return;
+
+  const dx = event.clientX - dragStartX;
+  const dy = event.clientY - dragStartY;
+
+  if (
+    Math.abs(event.clientX - pointerStartX) > 5 ||
+    Math.abs(event.clientY - pointerStartY) > 5
+  ) {
+    suppressSeatClick = true;
+    mapViewport.classList.add("dragging");
   }
+
+  if (suppressSeatClick) {
+    moveMap(dx, dy);
+  }
+
+  dragStartX = event.clientX;
+  dragStartY = event.clientY;
+});
+
+function stopDragging() {
+  isDragging = false;
+  mapViewport.classList.remove("dragging");
 }
 
-function saveCart() {
-  localStorage.setItem("auroraCart", JSON.stringify(cart));
-}
+mapViewport.addEventListener("pointerup", stopDragging);
+mapViewport.addEventListener("pointercancel", stopDragging);
 
+mapViewport.addEventListener("click", event => {
+  if (suppressSeatClick) {
+    event.preventDefault();
+    event.stopPropagation();
+    suppressSeatClick = false;
+  }
+}, true);
+
+generateSeatData();
+loadCart();
+renderSeats();
+renderCart();
+updateMapTransform();
 
 document.getElementById("add-to-cart")
   .addEventListener("click", addToCart);
 
-renderSeats();
+console.log(
+  `${venue.name}: ${seats.length} seats generated.`
+);
+
