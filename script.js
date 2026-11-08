@@ -1,7 +1,6 @@
 
 "use strict";
 
-
 const venue = {
   name: "Aurora Theatre",
   sections: [
@@ -32,41 +31,39 @@ let seats = [];
 let selectedSeat = null;
 let cart = [];
 
-
-
 function generateSeatData() {
   seats = [];
 
   venue.sections.forEach(section => {
     for (let row = 1; row <= section.rows; row++) {
       for (let number = 1; number <= section.seatsPerRow; number++) {
-        const seat = {
+        seats.push({
           id: `${section.name}-${row}-${number}`,
           section: section.name,
-          row: row,
-          number: number,
+          row,
+          number,
           price: section.price,
           available: (row + number) % 9 !== 0
-        };
-
-        seats.push(seat);
+        });
       }
     }
   });
 }
 
-
 function saveCart() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(
-      cart.map(seat => seat.id)
-    ));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(cart.map(seat => seat.id))
+    );
   } catch (error) {
     console.warn("Unable to save cart:", error);
   }
 }
 
 function loadCart() {
+  cart = [];
+
   try {
     const stored = JSON.parse(
       localStorage.getItem(STORAGE_KEY) || "[]"
@@ -90,8 +87,6 @@ function loadCart() {
     cart = [];
   }
 }
-
-
 
 function renderSeats() {
   const seatMap = document.getElementById("seat-map");
@@ -130,8 +125,7 @@ function renderSeats() {
 
         button.setAttribute(
           "aria-label",
-          `${seat.section}, Row ${seat.row}, ` +
-          `Seat ${seat.number}, ${seat.price} AZN`
+          `${seat.section}, Row ${seat.row}, Seat ${seat.number}, ${seat.price} AZN`
         );
 
         if (!seat.available) {
@@ -160,7 +154,6 @@ function renderSeats() {
 
   updateSeatColors();
 }
-
 
 function inspectSeat(seatId) {
   const seat = seats.find(s => s.id === seatId);
@@ -195,8 +188,6 @@ function inspectSeat(seatId) {
   updateSeatColors();
 }
 
-
-
 function updateSeatColors() {
   document.querySelectorAll(".seat").forEach(button => {
     const seatId = button.dataset.id;
@@ -211,15 +202,10 @@ function updateSeatColors() {
   });
 }
 
-
 function addToCart() {
   if (!selectedSeat || !selectedSeat.available) return;
 
-  const alreadyAdded = cart.some(
-    item => item.id === selectedSeat.id
-  );
-
-  if (alreadyAdded) {
+  if (cart.some(item => item.id === selectedSeat.id)) {
     alert("This seat is already in your cart.");
     return;
   }
@@ -235,7 +221,6 @@ function addToCart() {
   button.textContent = "ALREADY IN CART";
 }
 
-
 function removeFromCart(seatId) {
   cart = cart.filter(seat => seat.id !== seatId);
 
@@ -249,7 +234,6 @@ function removeFromCart(seatId) {
     button.textContent = "ADD TO CART";
   }
 }
-
 
 function renderCart() {
   const cartItems = document.getElementById("cart-items");
@@ -297,11 +281,9 @@ function renderCart() {
   });
 
   totalElement.textContent = total;
-
   countElement.textContent =
     `${cart.length} ticket${cart.length === 1 ? "" : "s"}`;
 }
-
 
 let zoom = 1;
 let panX = 0;
@@ -355,8 +337,6 @@ document.getElementById("move-right")
 document.getElementById("reset-view")
   .addEventListener("click", resetMap);
 
-
-
 mapViewport.addEventListener("wheel", event => {
   event.preventDefault();
 
@@ -364,25 +344,23 @@ mapViewport.addEventListener("wheel", event => {
   changeZoom(amount);
 }, { passive: false });
 
-
-
 let isDragging = false;
+let hasDragged = false;
 let dragStartX = 0;
 let dragStartY = 0;
 let pointerStartX = 0;
 let pointerStartY = 0;
-let suppressSeatClick = false;
 
 mapViewport.addEventListener("pointerdown", event => {
-  if (event.button !== 0) return;
+  if (event.button !== 0 || !event.isPrimary) return;
 
   isDragging = true;
+  hasDragged = false;
+
   pointerStartX = event.clientX;
   pointerStartY = event.clientY;
   dragStartX = event.clientX;
   dragStartY = event.clientY;
-
-  mapViewport.setPointerCapture(event.pointerId);
 });
 
 mapViewport.addEventListener("pointermove", event => {
@@ -391,15 +369,17 @@ mapViewport.addEventListener("pointermove", event => {
   const dx = event.clientX - dragStartX;
   const dy = event.clientY - dragStartY;
 
-  if (
-    Math.abs(event.clientX - pointerStartX) > 5 ||
-    Math.abs(event.clientY - pointerStartY) > 5
-  ) {
-    suppressSeatClick = true;
+  const totalMovement = Math.hypot(
+    event.clientX - pointerStartX,
+    event.clientY - pointerStartY
+  );
+
+  if (totalMovement > 8) {
+    hasDragged = true;
     mapViewport.classList.add("dragging");
   }
 
-  if (suppressSeatClick) {
+  if (hasDragged) {
     moveMap(dx, dy);
   }
 
@@ -413,13 +393,18 @@ function stopDragging() {
 }
 
 mapViewport.addEventListener("pointerup", stopDragging);
-mapViewport.addEventListener("pointercancel", stopDragging);
+mapViewport.addEventListener("pointercancel", () => {
+  stopDragging();
+  hasDragged = false;
+});
+
+window.addEventListener("pointerup", stopDragging);
 
 mapViewport.addEventListener("click", event => {
-  if (suppressSeatClick) {
+  if (hasDragged) {
     event.preventDefault();
     event.stopPropagation();
-    suppressSeatClick = false;
+    hasDragged = false;
   }
 }, true);
 
@@ -435,4 +420,3 @@ document.getElementById("add-to-cart")
 console.log(
   `${venue.name}: ${seats.length} seats generated.`
 );
-
