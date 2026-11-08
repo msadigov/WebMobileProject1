@@ -99,3 +99,12 @@ button:disabled {
   background: #64748b;
   cursor: not-allowed;
 }
+
+.seat.selected {
+  background: #f59e0b;
+  outline: 2px solid #b45309;
+}
+
+.seat.in-cart {
+  background: #2563eb;
+}
