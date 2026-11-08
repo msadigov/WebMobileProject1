@@ -141,6 +141,7 @@ function addToCart() {
   document.getElementById("add-to-cart").disabled = true;
 }
 
+
 function renderCart() {
   const cartItems = document.getElementById("cart-items");
   const totalElement = document.getElementById("total");
@@ -158,15 +159,39 @@ function renderCart() {
 
     const item = document.createElement("div");
     item.className = "cart-item";
-    item.textContent =
+
+    const description = document.createElement("span");
+    description.textContent =
       `${seat.section} - Row ${seat.row}, ` +
       `Seat ${seat.number}: ${seat.price} AZN`;
 
+    const removeButton = document.createElement("button");
+    removeButton.textContent = "Remove";
+    removeButton.className = "remove-btn";
+
+    removeButton.addEventListener("click", () => {
+      removeFromCart(seat.id);
+    });
+
+    item.appendChild(description);
+    item.appendChild(removeButton);
     cartItems.appendChild(item);
   });
 
   totalElement.textContent = total;
 }
+
+function removeFromCart(seatId) {
+  cart = cart.filter(seat => seat.id !== seatId);
+
+  renderCart();
+  updateSeatColors();
+
+  if (selectedSeat && selectedSeat.id === seatId) {
+    document.getElementById("add-to-cart").disabled = false;
+  }
+}
+
 
 document.getElementById("add-to-cart")
   .addEventListener("click", addToCart);
