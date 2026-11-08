@@ -49,3 +49,44 @@ function generateSeatData() {
 generateSeatData();
 
 console.log("Generated seats:", seats);
+
+function renderSeats() {
+  const seatMap = document.getElementById("seat-map");
+  seatMap.innerHTML = "";
+
+  venue.sections.forEach(section => {
+    const sectionDiv = document.createElement("div");
+    sectionDiv.className = "seating-section";
+
+    const title = document.createElement("h3");
+    title.textContent = `${section.name} - ${section.price} AZN`;
+    sectionDiv.appendChild(title);
+
+    for (let row = 1; row <= section.rows; row++) {
+      const rowDiv = document.createElement("div");
+      rowDiv.className = "seat-row";
+
+      seats.filter(seat =>
+        seat.section === section.name && seat.row === row
+      ).forEach(seat => {
+        const button = document.createElement("button");
+        button.className = "seat";
+        button.textContent = seat.number;
+        button.dataset.id = seat.id;
+
+        if (!seat.available) {
+          button.classList.add("unavailable");
+          button.disabled = true;
+        }
+
+        rowDiv.appendChild(button);
+      });
+
+      sectionDiv.appendChild(rowDiv);
+    }
+
+    seatMap.appendChild(sectionDiv);
+  });
+}
+
+renderSeats();
