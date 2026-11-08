@@ -108,3 +108,11 @@ button:disabled {
 .seat.in-cart {
   background: #2563eb;
 }
+
+.cart-item {
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #eff6ff;
+  border-radius: 8px;
+  border-left: 4px solid #2563eb;
+}
