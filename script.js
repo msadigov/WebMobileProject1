@@ -121,4 +121,54 @@ function updateSeatColors() {
   });
 }
 
+function addToCart() {
+  if (!selectedSeat || !selectedSeat.available) return;
+
+  const alreadyAdded = cart.some(
+    item => item.id === selectedSeat.id
+  );
+
+  if (alreadyAdded) {
+    alert("This seat is already in your cart.");
+    return;
+  }
+
+  cart.push(selectedSeat);
+
+  renderCart();
+  updateSeatColors();
+
+  document.getElementById("add-to-cart").disabled = true;
+}
+
+function renderCart() {
+  const cartItems = document.getElementById("cart-items");
+  const totalElement = document.getElementById("total");
+
+  cartItems.innerHTML = "";
+
+  if (cart.length === 0) {
+    cartItems.textContent = "Your cart is empty.";
+  }
+
+  let total = 0;
+
+  cart.forEach(seat => {
+    total += seat.price;
+
+    const item = document.createElement("div");
+    item.className = "cart-item";
+    item.textContent =
+      `${seat.section} - Row ${seat.row}, ` +
+      `Seat ${seat.number}: ${seat.price} AZN`;
+
+    cartItems.appendChild(item);
+  });
+
+  totalElement.textContent = total;
+}
+
+document.getElementById("add-to-cart")
+  .addEventListener("click", addToCart);
+
 renderSeats();
