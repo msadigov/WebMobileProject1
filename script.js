@@ -27,6 +27,24 @@ let seats = [];
 let selectedSeat = null;
 let cart = [];
 
+try {
+  const savedCart = JSON.parse(
+    localStorage.getItem("auroraCart") || "[]"
+  );
+
+  if (Array.isArray(savedCart)) {
+    cart = savedCart
+      .map(item => seats.find(seat => seat.id === item.id))
+      .filter((seat, index, all) =>
+        seat &&
+        seat.available &&
+        all.findIndex(s => s.id === seat.id) === index
+      );
+  }
+} catch (error) {
+  cart = [];
+}
+
 function generateSeatData() {
   venue.sections.forEach(section => {
     for (let row = 1; row <= section.rows; row++) {
@@ -47,6 +65,26 @@ function generateSeatData() {
 }
 
 generateSeatData();
+
+
+try {
+  const savedCart = JSON.parse(
+    localStorage.getItem("auroraCart") || "[]"
+  );
+
+  if (Array.isArray(savedCart)) {
+    cart = savedCart
+      .map(item => seats.find(seat => seat.id === item.id))
+      .filter((seat, index, all) =>
+        seat &&
+        seat.available &&
+        all.findIndex(s => s.id === seat.id) === index
+      );
+  }
+} catch (error) {
+  cart = [];
+}
+
 
 console.log("Generated seats:", seats);
 
@@ -131,7 +169,9 @@ function addToCart() {
   if (alreadyAdded) {
     alert("This seat is already in your cart.");
     return;
+    cart.push(selectedSeat);
   }
+  saveCart();
 
   cart.push(selectedSeat);
 
@@ -190,6 +230,10 @@ function removeFromCart(seatId) {
   if (selectedSeat && selectedSeat.id === seatId) {
     document.getElementById("add-to-cart").disabled = false;
   }
+}
+
+function saveCart() {
+  localStorage.setItem("auroraCart", JSON.stringify(cart));
 }
 
 
