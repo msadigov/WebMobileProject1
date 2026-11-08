@@ -69,3 +69,33 @@ button:disabled {
 #cart {
   border-top: 4px solid #2563eb;
 }
+
+.seating-section {
+  margin-bottom: 35px;
+  text-align: center;
+}
+
+.seat-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.seat {
+  width: 35px;
+  height: 35px;
+  padding: 0;
+  background: #22c55e;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.seat:hover {
+  background: #16a34a;
+}
+
+.seat.unavailable {
+  background: #64748b;
+  cursor: not-allowed;
+}
